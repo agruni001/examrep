@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CSA Track — TSS Exam Lab</title>
+  <meta name="description" content="Arduino exam scenarios: IR, DHT, MQ, keypad, load cell, irrigation. Copy and download ready code.">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-grid csa-theme">
+
+  <!-- Header -->
+  <header>
+    <div class="container header-inner">
+      <a href="index.html" class="nav-link" style="display: inline-flex; align-items: center; gap: 0.35rem;">
+        <i data-lucide="arrow-left" style="width: 16px; height: 16px;"></i>
+        Home
+      </a>
+      <div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem; font-weight: 600;">
+        <i data-lucide="cpu" style="color: var(--csa); width: 18px; height: 18px; filter: drop-shadow(0 0 6px var(--csa));"></i>
+        <span class="text-gradient-csa">CSA · Embedded</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero -->
+  <section class="hero">
+    <div class="container hero-inner fade-in">
+      <div class="badge badge-csa">
+        <i data-lucide="sparkles"></i>
+        <span>CSA Integrated Assessment</span>
+      </div>
+      <h1><span class="text-gradient-csa">Arduino</span> exam scenarios</h1>
+      <p>IR, DHT22, MQ135, 4×4 keypad, soil moisture, HX711 load cell — every most-likely scenario with ready code.</p>
+      
+      <div class="controls-row">
+        <div class="search-container">
+          <i data-lucide="search"></i>
+          <input type="text" id="csa-search" class="search-input" placeholder="Search component or task..." autocomplete="off">
+        </div>
+        <button id="download-all-btn" class="btn btn-csa">
+          <i data-lucide="download"></i> Download all CSA code
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Main Split Layout -->
+  <section class="container layout-split fade-in" style="animation-delay: 0.1s;">
+    
+    <!-- Scenarios List Column -->
+    <div class="scenario-list" id="csa-scenarios-container">
+      <!-- Generated scenario cards will load here -->
+    </div>
+
+    <!-- Chat Column -->
+    <aside>
+      <div class="chat-widget" id="global-chat-widget">
+        <div class="chat-header">
+          <i data-lucide="message-circle"></i>
+          <h3>Class Group Chat</h3>
+          <span class="chat-live-badge">live · everyone sees this</span>
+        </div>
+        <div class="chat-username-panel">
+          <input type="text" id="chat-name-input" class="chat-username-input" placeholder="Your name" maxlength="40" />
+        </div>
+        <div class="chat-messages" id="chat-messages-container">
+          <!-- Messages -->
+        </div>
+        <form class="chat-form" id="chat-send-form">
+          <input type="text" id="chat-msg-input" class="chat-input" placeholder="Enter your name first" maxlength="500" disabled />
+          <button type="submit" id="chat-send-btn" class="chat-send-btn" disabled>
+            <i data-lucide="send"></i>
+          </button>
+        </form>
+      </div>
+    </aside>
+
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <div class="container footer-inner">
+      Built for TSS candidates — good luck 🚀
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="app.js"></script>
+  <script src="chat.js"></script>
+  <script>
+    let activeQuery = "";
+
+    function renderCsaScenarios() {
+      const container = document.getElementById("csa-scenarios-container");
+      if (!container) return;
+
+      const query = activeQuery.trim().toLowerCase();
+      
+      const filtered = csaScenarios.filter((s) => {
+        if (!query) return true;
+        return (
+          s.title.toLowerCase().includes(query) ||
+          s.components.some((c) => c.toLowerCase().includes(query)) ||
+          s.tasks.some((t) => t.toLowerCase().includes(query))
+        );
+      });
+
+      if (filtered.length === 0) {
+        container.innerHTML = `
+          <div class="note-box" style="text-align: center; padding: 2.5rem; border-radius: 1rem;">
+            No scenario matches "${activeQuery.replace(/[<>"]/g, "")}".
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = filtered
+        .map((s, index) => renderScenarioCard(s, index, "csa"))
+        .join("");
+
+      // Re-initialize icons inside cards
+      if (typeof lucide !== "undefined") {
+        lucide.createIcons();
+      }
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      // Render Initial Scenarios
+      renderCsaScenarios();
+
+      // Bind search input filter
+      const searchInput = document.getElementById("csa-search");
+      if (searchInput) {
+        searchInput.addEventListener("input", (e) => {
+          activeQuery = e.target.value;
+          renderCsaScenarios();
+        });
+      }
+
+      // Bind download all button
+      const downloadAllBtn = document.getElementById("download-all-btn");
+      if (downloadAllBtn) {
+        downloadAllBtn.addEventListener("click", () => {
+          const query = activeQuery.trim().toLowerCase();
+          const listToDownload = csaScenarios.filter((s) => {
+            if (!query) return true;
+            return (
+              s.title.toLowerCase().includes(query) ||
+              s.components.some((c) => c.toLowerCase().includes(query)) ||
+              s.tasks.some((t) => t.toLowerCase().includes(query))
+            );
+          });
+          downloadCsaPack(listToDownload);
+        });
+      }
+
+      // Initialize live chat widget with "csa" accent
+      initChat("csa");
+    });
+  </script>
+</body>
+</html>
