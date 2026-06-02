@@ -1,53 +1,241 @@
-<?php
-$host = "localhost";
-$user = "root";
-$password = "";
-$database = "testdb";
-
-$conn = mysqli_connect($host, $user, $password, $database);
-
-if (!$conn) {
-  die("Connection failed");
-}
-
-$sql = "SELECT * FROM users";
-$result = mysqli_query($conn, $sql);
-?>
-
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Database Test — SEN</title>
-
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      max-width: 600px;
-      margin: 40px auto;
-      padding: 20px;
-    }
-
-    h1 {
-      text-align: center;
-    }
-
-    p {
-      padding: 10px;
-      border: 1px solid #000000;
-      margin: 8px 0;
-      border-radius: 5px;
-    }
-  </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NIT Track — Ultrasonic + NodeMCU + XAMPP</title>
+  <meta name="description" content="Featured NIT project: NodeMCU ESP8266 + HC-SR04 ultrasonic sensor pushing live data into a PHP web app served by XAMPP.">
+  <link rel="stylesheet" href="style.css">
 </head>
-<body>
+<body class="bg-grid nit-theme">
 
-<h1>Users</h1>
+  <!-- Header -->
+  <header>
+    <div class="container header-inner">
+      <a href="index.html" class="nav-link" style="display: inline-flex; align-items: center; gap: 0.35rem;">
+        <i data-lucide="arrow-left" style="width: 16px; height: 16px;"></i>
+        Home
+      </a>
+      <div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem; font-weight: 600;">
+        <i data-lucide="network" style="color: var(--nit); width: 18px; height: 18px; filter: drop-shadow(0 0 6px var(--nit));"></i>
+        <span class="text-gradient-nit">NIT · Networking</span>
+      </div>
+    </div>
+  </header>
 
-<?php
-while($row = mysqli_fetch_assoc($result)) {
-  echo "<p>" . htmlspecialchars($row['name']) . "</p>";
-}
-?>
+  <!-- Hero -->
+  <section class="hero">
+    <div class="container hero-inner fade-in">
+      <div class="badge badge-nit">
+        <i data-lucide="sparkles"></i>
+        <span>Featured Project · 100% exam-ready</span>
+      </div>
+      <h1>Ultrasonic + <span class="text-gradient-nit">NodeMCU + XAMPP</span></h1>
+      <p>HC-SR04 measures distance → NodeMCU ESP8266 sends it over Wi-Fi to <code>data.php</code> on XAMPP → <code>index.php</code> shows it live with a personalized look for every student.</p>
+    </div>
+  </section>
 
+  <section class="container page-intro fade-in" style="animation-delay: 0.05s;">
+    <div class="intro-grid">
+      <div class="feature-card feature-card-nit">
+        <h3>World-class NIT page</h3>
+        <p>Organized for exam success with structured group workflows, code exports, and a stable preview panel.</p>
+      </div>
+      <div class="feature-card feature-card-nit">
+        <h3>3-day lab plan</h3>
+        <p>Each NIT group works across three days with clear tasks, live previews, and download-ready files.</p>
+      </div>
+      <div class="feature-card feature-card-nit">
+        <h3>Clean code alignment</h3>
+        <p>Generated PHP + NodeMCU code is formatted, copy-ready, and packaged to keep work organized.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="container status-bar fade-in" style="animation-delay: 0.08s;">
+    <div class="status-grid">
+      <div class="status-card status-card-nit">
+        <span class="status-title">Groups active</span>
+        <strong class="status-metric">9 groups</strong>
+        <p class="status-note">3 groups per day, working in a 3-day NIT rotation.</p>
+      </div>
+      <div class="status-card status-card-nit">
+        <span class="status-title">Live preview</span>
+        <strong class="status-metric">Real-time</strong>
+        <p class="status-note">NodeMCU + XAMPP pipeline preview updates instantly.</p>
+      </div>
+      <div class="status-card status-card-nit">
+        <span class="status-title">Code exports</span>
+        <strong class="status-metric">Download-ready</strong>
+        <p class="status-note">Download full packs and personalized index.php with one click.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Main Split Layout -->
+  <section class="container layout-split fade-in" style="animation-delay: 0.1s;">
+    
+    <!-- Generator & Code Column -->
+    <div class="scenario-list">
+      
+      <!-- Personalized Generator Card -->
+      <div class="card generator-card">
+        <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+          <i data-lucide="wand-2" style="width: 18px; height: 18px;"></i>
+          <h2 style="font-size: 1.15rem; font-weight: 700;">Personalized <code>index.php</code> generator</h2>
+        </div>
+        <p style="font-size: 0.85rem; color: var(--muted-foreground); line-height: 1.45; margin-bottom: 1rem;">
+          Preview styling live, then download generated files individually or as a full ready-to-deploy pack.
+        </p>
+        <p style="font-size: 0.85rem; color: var(--muted-foreground); line-height: 1.45;">
+          Each student gets a different look — same PHP logic, different colors / fonts / layout. So no two submissions look identical.
+        </p>
+
+        <div class="generator-inputs">
+          <input type="text" id="student-name-input" class="generator-input" placeholder="Your name (shown inside the page)" maxlength="40">
+          <input type="color" id="accent-color-input" class="generator-input" title="Accent color" style="width:44px;padding:4px;height:38px;border-radius:6px;border:1px solid var(--border);" />
+          <button type="button" id="reroll-btn" class="btn btn-outline" style="white-space: nowrap;">
+            <i data-lucide="shuffle"></i> Re-roll style
+          </button>
+          <button type="button" id="download-php-btn" class="btn btn-nit" style="white-space: nowrap;">
+            <i data-lucide="download"></i> Download index.php
+          </button>
+        </div>
+
+        <!-- Live Preview -->
+        <div class="preview-box-container">
+          <div class="preview-bar">
+            <span>Preview · style: <strong id="preview-preset-name" style="color: var(--foreground);">Midnight</strong></span>
+          </div>
+          <div class="preview-screen" id="preview-screen">
+            <!-- Rendered live style preview loaded here by app.js -->
+          </div>
+        </div>
+
+        <div class="generator-packs">
+          <button type="button" id="download-full-pack-btn" class="btn btn-outline btn-sm">
+            <i data-lucide="download"></i> Download full pack (.ino + data.php + index.php)
+          </button>
+        </div>
+      </div>
+
+      <section class="code-library-section">
+        <div class="section-heading">
+          <h2>NIT Code Library</h2>
+          <p>All files are available individually with copy and download controls. Use the preview above to verify styling before you save.</p>
+        </div>
+        <div id="nit-code-library" class="code-library-grid">
+          <!-- Rendered NIT code files will appear here -->
+        </div>
+      </section>
+
+      <!-- Rendered base code files for NIT -->
+      <div id="nit-scenarios-container">
+        <!-- Rendered scenario cards dynamically -->
+      </div>
+
+      <!-- Setup instructions note -->
+      <div class="note-box">
+        <strong>XAMPP setup:</strong> put <code>data.php</code> and your personalized
+        <code>index.php</code> into <code>C:\xampp\htdocs\iot\</code>, start Apache, then point the NodeMCU
+        <code>SERVER</code> URL to <code>http://YOUR-PC-IP/iot/data.php</code>.
+      </div>
+
+    </div>
+
+    <!-- Chat Column -->
+    <aside>
+      <div class="chat-widget" id="global-chat-widget">
+        <div class="chat-header">
+          <i data-lucide="message-circle"></i>
+          <h3>Class Group Chat</h3>
+          <span class="chat-live-badge">live · everyone sees this</span>
+        </div>
+        <div class="chat-username-panel">
+          <input type="text" id="chat-name-input" class="chat-username-input" placeholder="Your name" maxlength="40" />
+        </div>
+        <div class="chat-messages" id="chat-messages-container">
+          <!-- Messages -->
+        </div>
+        <form class="chat-form" id="chat-send-form">
+          <input type="text" id="chat-msg-input" class="chat-input" placeholder="Enter your name first" maxlength="500" disabled />
+          <button type="submit" id="chat-send-btn" class="chat-send-btn" disabled>
+            <i data-lucide="send"></i>
+          </button>
+        </form>
+      </div>
+    </aside>
+
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <div class="container footer-inner">
+      Built for TSS candidates — good luck 🚀
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="app.js"></script>
+  <script src="chat.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      // 1. Render the NIT Scenario details
+      const container = document.getElementById("nit-scenarios-container");
+      if (container) {
+        container.innerHTML = nitScenarios
+          .map((s, index) => renderScenarioCard(s, index, "nit"))
+          .join("");
+      }
+
+      // 2. Initialize dynamic PHP preview builder
+      const studentInput = document.getElementById("student-name-input");
+      
+      // Load initial random style
+      activeStyle = pickRandomStyle();
+      updatePhpPreview(studentInput.value);
+
+      // Listen for name typing to update preview live
+      if (studentInput) {
+        studentInput.addEventListener("input", (e) => {
+          updatePhpPreview(e.target.value);
+        });
+      }
+
+      // Bind re-roll style button
+      const rerollBtn = document.getElementById("reroll-btn");
+      if (rerollBtn) {
+        rerollBtn.addEventListener("click", () => {
+          activeStyle = pickRandomStyle();
+          updatePhpPreview(studentInput.value);
+          showToast(`Applied "${activeStyle.name}" theme style`);
+        });
+      }
+
+      // Bind download index.php button
+      const downloadPhpBtn = document.getElementById("download-php-btn");
+      if (downloadPhpBtn) {
+        downloadPhpBtn.addEventListener("click", () => {
+          downloadPersonalPhp(studentInput.value);
+        });
+      }
+
+      // Bind download full pack button
+      const downloadFullPackBtn = document.getElementById("download-full-pack-btn");
+      if (downloadFullPackBtn) {
+        downloadFullPackBtn.addEventListener("click", () => {
+          downloadNitFullPack(studentInput.value);
+        });
+      }
+
+      // 3. Render NIT code library files
+      renderNitCodeLibrary();
+
+      // 3. Initialize live chat widget with "nit" accent
+      initChat("nit");
+    });
+  </script>
 </body>
 </html>
