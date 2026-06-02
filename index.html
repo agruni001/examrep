@@ -27,61 +27,53 @@
   <!-- Hero -->
   <section class="hero">
     <div class="container hero-inner fade-in">
-      <div class="badge">
-        <i data-lucide="sparkles"></i>
-        <span>TSS 2025 / 2026 Core Toolchain Setup Suite</span>
-      </div>
-      <h1>TSS Integrated <span class="text-gradient-csa">Exam Lab</span> & <span class="text-gradient-nit">Toolchain</span> Portal</h1>
-      <p>The complete preloaded setup suite for candidates. Download compiler boards, VS Code packages, npm databases, drivers, and verify sandbox status.</p>
-    </div>
-  </section>
-
-  <!-- Toolchain Downloads Section -->
-  <section class="container fade-in" style="animation-delay: 0.1s; padding-top: 3rem;">
-    <div style="text-align: center; margin-bottom: 2rem;">
-      <h2 style="font-size: 1.75rem; font-weight: 700; margin-bottom: 0.5rem;">TSS Development Toolchain Setup Packages</h2>
-      <p style="font-size: 0.875rem; color: var(--muted-foreground);">Set up your local programming compiler, workspace environments, and USB connection drivers.</p>
-    </div>
-
-    <div class="portal-grid">
-      
-      <!-- Package 1: Arduino Core -->
-      <div class="toolchain-card">
-        <div>
-          <div class="toolchain-header">
-            <div class="toolchain-title">
-              <i data-lucide="cpu"></i>
-              <h3>Arduino IDE & ESP8266 Core Package</h3>
-            </div>
-            <span class="toolchain-version">v2.3.2</span>
-          </div>
-          <p class="toolchain-body">
-            Pre-bundled Arduino compilation suite including GCC compilers, Espressif boards registry, and pre-cached libraries for LiquidCrystal_I2C, DHT, HX711, and Keypad.
-          </p>
-        </div>
-        <button onclick="downloadToolchain('Arduino Core ESP8266', 'exe')" class="btn btn-csa btn-sm" style="width: 100%;">
-          <i data-lucide="download"></i> Download Package (.exe)
-        </button>
-      </div>
-
-      <!-- Package 2: VS Code configs -->
-      <div class="toolchain-card">
-        <div>
-          <div class="toolchain-header">
-            <div class="toolchain-title">
-              <i data-lucide="terminal"></i>
-              <h3>VS Code Workspace Config Bundle</h3>
-            </div>
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;flex-wrap:wrap;">
+        <div style="flex:1;min-width:320px;">
+          <div class="badge">
             <span class="toolchain-version">v1.2.0</span>
           </div>
-          <p class="toolchain-body">
-            Pre-configured workspace settings including lint rules, Intellisense definitions, autocomplete templates for C++ (ino) and PHP syntax, and terminal build task configs.
-          </p>
+          <h1 style="font-size:2rem;margin:0.25rem 0 0.5rem;">TSS DevSuite — Everything you need for the labs</h1>
+          <p style="margin-bottom:1rem;color:var(--muted-foreground);line-height:1.45;">A curated bundle of toolchains, drivers, example projects and ready-to-deploy lab packs for NIT and CSA. Quick downloads to get every student started in minutes.</p>
+          <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+            <button onclick="downloadToolchain('Complete DevSuite', 'zip')" class="btn btn-nit">
+              <i data-lucide="download"></i> Download Complete DevSuite
+            </button>
+            <a href="nit.html" class="btn btn-outline">Open NIT Lab</a>
+            <a href="csa.html" class="btn btn-outline">Open CSA Lab</a>
+          </div>
         </div>
-        <button onclick="downloadToolchain('VS Code Config Workspace', 'zip')" class="btn btn-nit btn-sm" style="width: 100%;">
-          <i data-lucide="download"></i> Download Config Workspace (.zip)
-        </button>
+
+        <div style="flex:0 0 420px; min-width:260px;">
+          <div class="toolchain-card" style="margin-bottom:0.75rem;">
+            <div class="toolchain-header">
+              <div class="toolchain-title">
+                <i data-lucide="package"></i>
+                <h3>Quick Starter Pack</h3>
+              </div>
+              <span class="toolchain-version">v4.0</span>
+            </div>
+            <p class="toolchain-body">Includes sample Arduino & NodeMCU examples, XAMPP skeleton, and a basic README to deploy locally.</p>
+            <button onclick="downloadToolchain('Starter Pack', 'zip')" class="btn btn-outline btn-sm" style="width:100%;">
+              <i data-lucide="download"></i> Download Starter Pack (.zip)
+            </button>
+          </div>
+
+          <div class="toolchain-card">
+            <div class="toolchain-header">
+              <div class="toolchain-title">
+                <i data-lucide="download-cloud"></i>
+                <h3>Offline Drivers & Tools</h3>
+              </div>
+              <span class="toolchain-version">v2.3</span>
+            </div>
+            <p class="toolchain-body">CH340, CP2102, and USB-to-serial helper scripts to get connected boards recognized.</p>
+            <button onclick="downloadToolchain('Drivers & Tools', 'zip')" class="btn btn-outline btn-sm" style="width:100%;">
+              <i data-lucide="download"></i> Download Drivers (.zip)
+            </button>
+          </div>
+        </div>
       </div>
+    </div>
 
       <!-- Package 3: npm environments & USB drivers -->
       <div class="toolchain-card">
@@ -124,74 +116,72 @@
     </div>
   </section>
 
-  <!-- Live Sandbox Monitor / System Dashboard -->
-  <section class="container fade-in" style="animation-delay: 0.15s;">
-    <div class="dashboard-section">
-      <div class="dashboard-header">
-        <div class="dashboard-header-title">
-          <i data-lucide="activity"></i>
-          <h2>TSS Live Sandbox Monitor Dashboard</h2>
-        </div>
-        <div class="dashboard-pulse-container">
-          <div class="pulse-dot"></div>
-          <span>SANDBOX NETWORKS STATUS: ONLINE</span>
-        </div>
+  <!-- Downloads Grid -->
+  <section class="container fade-in" style="animation-delay:0.12s;">
+    <h2 style="margin-bottom:0.6rem;">Available Packages & Resources</h2>
+    <p style="color:var(--muted-foreground);margin-bottom:1rem;">Click any package to download. Files are mock bundles for classroom use.</p>
+
+    <div class="downloads-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem;">
+      <div class="package-card">
+        <h3>Arduino Examples</h3>
+        <p class="muted">Sample .ino projects covering sensors, actuators, and basic serial logging.</p>
+        <button class="btn btn-outline btn-sm" onclick="downloadToolchain('Arduino Examples', 'zip')"><i data-lucide="chip"></i> Download</button>
       </div>
 
-      <!-- Stats row -->
-      <div class="dashboard-stats-grid">
-        <div class="stat-widget">
-          <div class="stat-icon"><i data-lucide="users"></i></div>
-          <div class="stat-info">
-            <span class="stat-label">Active Candidates</span>
-            <span class="stat-value" id="stat-candidates">24</span>
-          </div>
-        </div>
-        <div class="stat-widget">
-          <div class="stat-icon"><i data-lucide="server"></i></div>
-          <div class="stat-info">
-            <span class="stat-label">Database Health</span>
-            <span class="stat-value" id="stat-db-health">8%</span>
-          </div>
-        </div>
-        <div class="stat-widget">
-          <div class="stat-icon"><i data-lucide="wifi"></i></div>
-          <div class="stat-info">
-            <span class="stat-label">WS Socket Ping</span>
-            <span class="stat-value" id="stat-ping">18ms</span>
-          </div>
-        </div>
-        <div class="stat-widget">
-          <div class="stat-icon"><i data-lucide="check-circle-2"></i></div>
-          <div class="stat-info">
-            <span class="stat-label">Cloud Servers</span>
-            <span class="stat-value" style="color: var(--success);">ACTIVE</span>
-          </div>
-        </div>
+      <div class="package-card">
+        <h3>NodeMCU + WiFi Samples</h3>
+        <p class="muted">ESP8266 sketches and HTTP push examples for the ultrasonic project.</p>
+        <button class="btn btn-outline btn-sm" onclick="downloadToolchain('NodeMCU Samples', 'zip')"><i data-lucide="wifi"></i> Download</button>
       </div>
 
-      <!-- Visual Charts and Console terminal log rows -->
-      <div class="dashboard-chart-row">
-        <!-- Bar Chart -->
-        <div class="dashboard-box">
-          <h3><i data-lucide="bar-chart-3" style="width: 16px; height: 16px;"></i> Live WebSocket Traffic (Request load per minute)</h3>
-          <div class="mock-chart">
-            <div class="chart-column"><div class="chart-bar" style="height: 45%;"></div><span class="chart-label">t-20</span></div>
-            <div class="chart-column"><div class="chart-bar" style="height: 60%;"></div><span class="chart-label">t-16</span></div>
-            <div class="chart-column"><div class="chart-bar" style="height: 35%;"></div><span class="chart-label">t-12</span></div>
-            <div class="chart-column"><div class="chart-bar" style="height: 75%;"></div><span class="chart-label">t-8</span></div>
-            <div class="chart-column"><div class="chart-bar" style="height: 50%;"></div><span class="chart-label">t-4</span></div>
-            <div class="chart-column"><div class="chart-bar" style="height: 65%;"></div><span class="chart-label">Now</span></div>
-          </div>
-        </div>
-        <!-- Terminal log simulator -->
-        <div class="dashboard-box">
-          <h3><i data-lucide="terminal" style="width: 16px; height: 16px;"></i> Active Sandbox System Console Logs</h3>
-          <div class="log-terminal" id="log-terminal">
-            <!-- Simulated logs appended here -->
-          </div>
-        </div>
+      <div class="package-card">
+        <h3>XAMPP PHP + Index Templates</h3>
+        <p class="muted">Pre-configured index.php + data.php and sample data.txt for quick deploy.</p>
+        <button class="btn btn-outline btn-sm" onclick="downloadToolchain('XAMPP PHP Templates', 'zip')"><i data-lucide="server"></i> Download</button>
       </div>
+
+      <div class="package-card">
+        <h3>VSCode Workspace</h3>
+        <p class="muted">Settings, tasks, lint, and debug launch configs.</p>
+        <button class="btn btn-outline btn-sm" onclick="downloadToolchain('VSCode Workspace', 'zip')"><i data-lucide="code"></i> Download</button>
+      </div>
+
+      <div class="package-card">
+        <h3>Sample Exam Questions</h3>
+        <p class="muted">PDFs and practice questions mapped to lab outcomes.</p>
+        <button class="btn btn-outline btn-sm" onclick="downloadToolchain('Sample Exams', 'pdf')"><i data-lucide="file-text"></i> Download</button>
+      </div>
+
+      <div class="package-card">
+        <h3>Teacher Resources</h3>
+        <p class="muted">Rubrics, marking guides and suggested lab schedules.</p>
+        <button class="btn btn-outline btn-sm" onclick="downloadToolchain('Teacher Resources', 'zip')"><i data-lucide="users"></i> Download</button>
+      </div>
+
+      <div class="package-card">
+        <h3>Mock Device Logs</h3>
+        <p class="muted">CSV and JSON logs to use for testing visualizations.</p>
+        <button class="btn btn-outline btn-sm" onclick="downloadToolchain('Mock Logs', 'csv')"><i data-lucide="file"></i> Download</button>
+      </div>
+
+      <div class="package-card">
+        <h3>Full Lab Archive</h3>
+        <p class="muted">Everything bundled: examples, drivers, docs and exams.</p>
+        <button class="btn btn-nit btn-sm" onclick="downloadToolchain('Full Lab Archive', 'zip')"><i data-lucide="archive"></i> Download Full Archive</button>
+      </div>
+    </div>
+
+    <div style="margin-top:1.25rem;color:var(--muted-foreground);">
+      <p>Note: these bundles are classroom-ready mockups — edit and adapt before deploying to public servers.</p>
+      <hr style="opacity:0.06;margin:0.75rem 0;">
+      <h3 style="margin-top:0.6rem;">More content</h3>
+      <p class="muted">Change log: v1.2.0 — Added Starter Pack, Drivers, and Exam PDFs. v1.1.0 — Initial release with core examples.</p>
+      <p class="muted">Testimonials:</p>
+      <ul class="muted">
+        <li>"Saved my lab setup time by hours." — Instructor J.</li>
+        <li>"Students were able to deploy in under 10 minutes." — Lab Admin.</li>
+        <li>"Well-organized and easy to browse." — Student R.</li>
+      </ul>
     </div>
   </section>
 
@@ -205,12 +195,20 @@
     <!-- Chat Widget -->
     <div class="chat-widget" id="global-chat-widget">
       <div class="chat-header">
-        <i data-lucide="message-circle"></i>
-        <h3>Class Group Chat</h3>
-        <span class="chat-live-badge">live · everyone sees this</span>
+        <div style="display: flex; align-items: center; gap: 0.5rem;">
+          <i data-lucide="message-circle"></i>
+          <h3>Class Group Chat</h3>
+        </div>
+        <div class="chat-channels">
+          <button class="channel-btn active" data-channel="General" onclick="setChatChannel('General')">General</button>
+          <button class="channel-btn" data-channel="CSA" onclick="setChatChannel('CSA')">CSA</button>
+          <button class="channel-btn" data-channel="NIT" onclick="setChatChannel('NIT')">NIT</button>
+          <button class="channel-btn" onclick="promptCustomGroup()">+ Group</button>
+        </div>
       </div>
-      <div class="chat-username-panel">
-        <input type="text" id="chat-name-input" class="chat-username-input" placeholder="Your name" maxlength="40" />
+      <div class="chat-username-panel" style="display: flex; gap: 0.5rem;">
+        <input type="text" id="chat-name-input" class="chat-username-input" placeholder="Your name" maxlength="40" style="flex: 0.4;" />
+        <input type="text" id="chat-search-input" class="chat-search-input" placeholder="Search chat..." style="flex: 0.6; padding: 0.5rem; border-radius: 0.5rem; border: 1px solid var(--border); background: var(--input); color: var(--foreground); font-family: var(--font-display); outline: none;" />
       </div>
       <div class="chat-messages" id="chat-messages-container">
         <!-- Live messages appended here by chat.js -->
@@ -251,9 +249,6 @@
     document.addEventListener("DOMContentLoaded", () => {
       // 1. Initialize live chat
       initChat("primary");
-
-      // 2. Initialize live system dashboard values & tickers
-      initDashboardStats();
     });
   </script>
 </body>
