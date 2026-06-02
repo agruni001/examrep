@@ -9,6 +9,9 @@ const SUPABASE_KEY = "sb_publishable_nubvk-L7h0nKlAE5LRGUaA_Qvd5zOf4";
 let supabaseClient = null;
 let chatMessages = [];
 let activeAccent = "primary"; // primary, csa, nit
+let activeChannel = "General";
+let pinnedMessageIds = JSON.parse(localStorage.getItem("tss-pinned-msgs") || "[]");
+let searchQuery = "";
 
 // Setup Supabase Client
 function initSupabase() {
@@ -20,6 +23,50 @@ function initSupabase() {
   return false;
 }
 
+// Extract channel from message text e.g., "[CHANNEL:NIT] Hello"
+function parseMessageData(rawMessage) {
+  let channel = "General";
+  let content = rawMessage;
+  
+  const channelMatch = rawMessage.match(/^\[CHANNEL:([^\]]+)\]\s*(.*)$/si);
+  if (channelMatch) {
+    channel = channelMatch[1];
+    content = channelMatch[2];
+  }
+  
+  return { channel, content };
+}
+
+// Toggle Pin
+window.togglePin = function(msgId) {
+  const index = pinnedMessageIds.indexOf(msgId);
+  if (index === -1) {
+    pinnedMessageIds.push(msgId);
+  } else {
+    pinnedMessageIds.splice(index, 1);
+  }
+  localStorage.setItem("tss-pinned-msgs", JSON.stringify(pinnedMessageIds));
+  renderMessages();
+};
+
+window.setChatChannel = function(channel) {
+  activeChannel = channel;
+  
+  // Update UI buttons
+  document.querySelectorAll('.channel-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.channel === channel);
+  });
+  
+  renderMessages();
+};
+
+window.promptCustomGroup = function() {
+  const group = prompt("Enter Custom Group Name:");
+  if (group && group.trim()) {
+    setChatChannel(group.trim());
+  }
+};
+
 // Render Messages inside Container
 function renderMessages() {
   const container = document.getElementById("chat-messages-container");
@@ -28,9 +75,17 @@ function renderMessages() {
   const nameInput = document.getElementById("chat-name-input");
   const myName = nameInput ? nameInput.value.trim().toLowerCase() : "";
 
-  if (chatMessages.length === 0) {
+  // Filter messages by channel and search
+  const filteredMessages = chatMessages.filter(m => {
+    const { channel, content } = parseMessageData(m.message);
+    if (channel !== activeChannel) return false;
+    if (searchQuery && !content.toLowerCase().includes(searchQuery.toLowerCase())) return false;
+    return true;
+  });
+
+  if (filteredMessages.length === 0) {
     container.innerHTML = `
-      <p class="chat-placeholder">No messages yet — say hi 👋</p>
+      <p class="chat-placeholder">No messages in ${activeChannel} yet — say hi 👋</p>
     `;
     return;
   }
@@ -43,7 +98,7 @@ function renderMessages() {
     accentClass = "bg-nit text-white";
   }
 
-  container.innerHTML = chatMessages
+  container.innerHTML = filteredMessages
     .map((m) => {
       const isMine = myName && m.name.trim().toLowerCase() === myName;
       const bubbleClass = isMine ? "mine" : "other";
@@ -52,19 +107,35 @@ function renderMessages() {
         minute: "2-digit",
       });
 
-      // Escape message content and name to prevent XSS
-      const escapedMsg = m.message
+      const { content } = parseMessageData(m.message);
+
+      // Escape HTML to prevent XSS
+      let escapedMsg = content
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
         .replace(/>/g, "&gt;");
+        
       const escapedName = m.name
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
         .replace(/>/g, "&gt;");
 
+      // Format code blocks (```code```)
+      escapedMsg = escapedMsg.replace(/```([\s\S]*?)```/g, (match, code) => {
+        return `<pre class="chat-code-block"><code>${code}</code></pre>`;
+      });
+
+      const isPinned = pinnedMessageIds.includes(m.id);
+      const pinClass = isPinned ? "pinned-msg" : "";
+
       return `
-        <div class="chat-bubble-container ${bubbleClass}">
-          <span class="chat-meta">${escapedName} · ${timeStr}</span>
+        <div class="chat-bubble-container ${bubbleClass} ${pinClass}">
+          <div class="chat-meta">
+            <span>${escapedName} · ${timeStr}</span>
+            <button onclick="togglePin('${m.id}')" class="pin-btn ${isPinned ? 'active' : ''}">
+              <i data-lucide="pin" style="width: 12px; height: 12px;"></i>
+            </button>
+          </div>
           <div class="chat-bubble ${isMine ? accentClass : "bg-muted text-foreground"}">
             ${escapedMsg}
           </div>
@@ -72,6 +143,10 @@ function renderMessages() {
       `;
     })
     .join("");
+
+  if (typeof lucide !== "undefined") {
+    lucide.createIcons();
+  }
 
   scrollToBottom();
 }
@@ -129,9 +204,12 @@ async function sendMessage(text) {
 
   const nameInput = document.getElementById("chat-name-input");
   const name = nameInput ? nameInput.value.trim() : "";
-  const message = text.trim();
+  const rawContent = text.trim();
 
-  if (!name || !message) return;
+  if (!name || !rawContent) return;
+  
+  // Prepend channel info
+  const message = `[CHANNEL:${activeChannel}] ${rawContent}`;
 
   // Persist name in localStorage
   localStorage.setItem(NAME_KEY, name);
@@ -141,7 +219,9 @@ async function sendMessage(text) {
     .insert({ name, message });
 
   if (error) {
-    showToast("Failed to send message", "error");
+    if (typeof showToast !== "undefined") {
+      showToast("Failed to send message", "error");
+    }
     console.error("Error inserting message:", error);
   }
 }
@@ -159,7 +239,7 @@ function updateChatControlsState() {
   sendBtn.disabled = !hasName || msgInput.value.trim().length === 0;
 
   if (hasName) {
-    msgInput.placeholder = "Type a message...";
+    msgInput.placeholder = "Type a message... (Use ``` for code)";
   } else {
     msgInput.placeholder = "Enter your name first";
   }
@@ -172,7 +252,7 @@ function initChat(accent = "primary") {
   // Set accent themes
   const chatWidget = document.getElementById("global-chat-widget");
   if (chatWidget) {
-    chatWidget.className = `chat-widget ${accent}-theme`;
+    chatWidget.className = \`chat-widget \${accent}-theme\`;
   }
 
   if (!initSupabase()) return;
@@ -182,6 +262,15 @@ function initChat(accent = "primary") {
   const nameInput = document.getElementById("chat-name-input");
   if (nameInput && cachedName) {
     nameInput.value = cachedName;
+  }
+  
+  // Bind Search Input
+  const searchInput = document.getElementById("chat-search-input");
+  if (searchInput) {
+    searchInput.addEventListener("input", (e) => {
+      searchQuery = e.target.value;
+      renderMessages();
+    });
   }
 
   // Bind Events
