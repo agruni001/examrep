@@ -185,6 +185,93 @@
     </div>
   </section>
 
+  <section class="container dashboard-section fade-in" style="animation-delay:0.16s;">
+    <div class="dashboard-header">
+      <div class="dashboard-header-title">
+        <i data-lucide="bar-chart-2"></i>
+        <h2>Group Chart Admin</h2>
+      </div>
+      <span class="dashboard-pill">Admin passcode: 1234567890</span>
+    </div>
+    <p class="dashboard-description">Use the admin interface below to create student groups for the chart. Once groups exist, anyone can join a group and see that group’s line or bar dataset in the chart area.</p>
+
+    <div class="dashboard-summary-grid">
+      <div class="stat-widget">
+        <div class="stat-icon"><i data-lucide="users"></i></div>
+        <div class="stat-info"><span class="stat-label">Groups Active</span><strong class="stat-value" id="group-count">0</strong></div>
+      </div>
+      <div class="stat-widget">
+        <div class="stat-icon"><i data-lucide="user-plus"></i></div>
+        <div class="stat-info"><span class="stat-label">Joined Group</span><strong class="stat-value" id="joined-group-name">None</strong></div>
+      </div>
+      <div class="stat-widget">
+        <div class="stat-icon"><i data-lucide="lock"></i></div>
+        <div class="stat-info"><span class="stat-label">Admin Status</span><strong class="stat-value" id="admin-status">Locked</strong></div>
+      </div>
+      <div class="stat-widget">
+        <div class="stat-icon"><i data-lucide="layers"></i></div>
+        <div class="stat-info"><span class="stat-label">Track</span><strong class="stat-value" id="selected-track-label">NIT</strong></div>
+      </div>
+    </div>
+
+    <div class="dashboard-chart-row">
+      <div class="dashboard-box">
+        <h3><i data-lucide="sliders"></i> Chart Controls</h3>
+        <div class="chart-controls">
+          <label class="chart-control-field">
+            <span>Track</span>
+            <select id="track-select" class="chart-select"></select>
+          </label>
+          <label class="chart-control-field">
+            <span>Day</span>
+            <select id="day-select" class="chart-select"></select>
+          </label>
+          <label class="chart-control-field">
+            <span>Team</span>
+            <select id="team-select" class="chart-select"></select>
+          </label>
+          <label class="chart-control-field">
+            <span>Group</span>
+            <select id="group-select" class="chart-select"></select>
+          </label>
+        </div>
+        <button class="btn btn-primary" onclick="promptChartQuery()">Refresh Chart</button>
+      </div>
+
+      <div class="dashboard-box">
+        <h3><i data-lucide="shield"></i> Admin Group Creation</h3>
+        <div class="chart-controls" style="grid-template-columns: 1fr;">
+          <label class="chart-control-field">
+            <span>Admin Passcode</span>
+            <input id="admin-passcode-input" class="chart-input-control" type="password" placeholder="Enter passcode" />
+          </label>
+          <label class="chart-control-field">
+            <span>New Group Name</span>
+            <input id="new-group-name-input" class="chart-input-control" type="text" placeholder="Group name e.g. Team Alpha" />
+          </label>
+        </div>
+        <button id="create-group-btn" type="button" class="btn btn-csa">Create Group</button>
+        <p id="group-create-message" style="margin-top:0.75rem;color:var(--muted-foreground);font-size:0.9rem;">Only the admin with the right passcode can add a new group to the chart.</p>
+      </div>
+
+      <div class="dashboard-box">
+        <h3><i data-lucide="user-check"></i> Join a Group</h3>
+        <div class="chart-controls" style="grid-template-columns: 1fr;">
+          <label class="chart-control-field">
+            <span>Select Group</span>
+            <select id="join-group-select" class="chart-select"></select>
+          </label>
+        </div>
+        <button id="join-group-btn" type="button" class="btn btn-nit">Join Selected Group</button>
+        <p id="join-message" style="margin-top:0.75rem;color:var(--muted-foreground);font-size:0.9rem;">Students can join any available group and see that group highlighted in the chart.</p>
+      </div>
+    </div>
+
+    <div class="dashboard-box dashboard-chart-full" style="min-height:340px;">
+      <canvas id="dashboardChart"></canvas>
+    </div>
+  </section>
+
   <!-- Global classroom Chat section -->
   <section class="container layout-single fade-in" style="animation-delay: 0.2s;">
     <div style="text-align: center; margin-bottom: 2rem;">
@@ -242,6 +329,7 @@
 
   <!-- Scripts -->
   <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="app.js"></script>
   <script src="chat.js"></script>
@@ -249,6 +337,35 @@
     document.addEventListener("DOMContentLoaded", () => {
       // 1. Initialize live chat
       initChat("primary");
+
+      // 2. Initialize chart admin controls if present
+      if (typeof populateChartControls === 'function') {
+        populateChartControls();
+      }
+      if (typeof updateChart === 'function') {
+        const trackSelect = document.getElementById('track-select');
+        const daySelect = document.getElementById('day-select');
+        const teamSelect = document.getElementById('team-select');
+        if (trackSelect && daySelect && teamSelect) {
+          updateChart(trackSelect.value, daySelect.value, teamSelect.value);
+        }
+      }
+
+      const createBtn = document.getElementById('create-group-btn');
+      if (createBtn) {
+        createBtn.addEventListener('click', () => {
+          const passcode = document.getElementById('admin-passcode-input')?.value || '';
+          const name = document.getElementById('new-group-name-input')?.value || '';
+          if (typeof createGroup === 'function') createGroup(name, passcode);
+        });
+      }
+
+      const joinBtn = document.getElementById('join-group-btn');
+      if (joinBtn) {
+        joinBtn.addEventListener('click', () => {
+          if (typeof joinGroup === 'function') joinGroup();
+        });
+      }
     });
   </script>
 </body>
