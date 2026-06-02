@@ -35,6 +35,43 @@
     </div>
   </section>
 
+  <section class="container page-intro fade-in" style="animation-delay: 0.05s;">
+    <div class="intro-grid">
+      <div class="feature-card feature-card-nit">
+        <h3>World-class NIT page</h3>
+        <p>Organized for exam success with structured group workflows, code exports, and a stable preview panel.</p>
+      </div>
+      <div class="feature-card feature-card-nit">
+        <h3>3-day lab plan</h3>
+        <p>Each NIT group works across three days with clear tasks, live previews, and download-ready files.</p>
+      </div>
+      <div class="feature-card feature-card-nit">
+        <h3>Clean code alignment</h3>
+        <p>Generated PHP + NodeMCU code is formatted, copy-ready, and packaged to keep work organized.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="container status-bar fade-in" style="animation-delay: 0.08s;">
+    <div class="status-grid">
+      <div class="status-card status-card-nit">
+        <span class="status-title">Groups active</span>
+        <strong class="status-metric">9 groups</strong>
+        <p class="status-note">3 groups per day, working in a 3-day NIT rotation.</p>
+      </div>
+      <div class="status-card status-card-nit">
+        <span class="status-title">Live preview</span>
+        <strong class="status-metric">Real-time</strong>
+        <p class="status-note">NodeMCU + XAMPP pipeline preview updates instantly.</p>
+      </div>
+      <div class="status-card status-card-nit">
+        <span class="status-title">Code exports</span>
+        <strong class="status-metric">Download-ready</strong>
+        <p class="status-note">Download full packs and personalized index.php with one click.</p>
+      </div>
+    </div>
+  </section>
+
   <!-- Main Split Layout -->
   <section class="container layout-split fade-in" style="animation-delay: 0.1s;">
     
@@ -47,16 +84,19 @@
           <i data-lucide="wand-2" style="width: 18px; height: 18px;"></i>
           <h2 style="font-size: 1.15rem; font-weight: 700;">Personalized <code>index.php</code> generator</h2>
         </div>
+        <p style="font-size: 0.85rem; color: var(--muted-foreground); line-height: 1.45; margin-bottom: 1rem;">
+          Preview styling live, then download generated files individually or as a full ready-to-deploy pack.
+        </p>
         <p style="font-size: 0.85rem; color: var(--muted-foreground); line-height: 1.45;">
           Each student gets a different look — same PHP logic, different colors / fonts / layout. So no two submissions look identical.
         </p>
 
         <div class="generator-inputs">
           <input type="text" id="student-name-input" class="generator-input" placeholder="Your name (shown inside the page)" maxlength="40">
-          <button id="reroll-btn" class="btn btn-outline" style="white-space: nowrap;">
+          <button type="button" id="reroll-btn" class="btn btn-outline" style="white-space: nowrap;">
             <i data-lucide="shuffle"></i> Re-roll style
           </button>
-          <button id="download-php-btn" class="btn btn-nit" style="white-space: nowrap;">
+          <button type="button" id="download-php-btn" class="btn btn-nit" style="white-space: nowrap;">
             <i data-lucide="download"></i> Download index.php
           </button>
         </div>
@@ -72,11 +112,21 @@
         </div>
 
         <div class="generator-packs">
-          <button id="download-full-pack-btn" class="btn btn-outline btn-sm">
+          <button type="button" id="download-full-pack-btn" class="btn btn-outline btn-sm">
             <i data-lucide="download"></i> Download full pack (.ino + data.php + index.php)
           </button>
         </div>
       </div>
+
+      <section class="code-library-section">
+        <div class="section-heading">
+          <h2>NIT Code Library</h2>
+          <p>All files are available individually with copy and download controls. Use the preview above to verify styling before you save.</p>
+        </div>
+        <div id="nit-code-library" class="code-library-grid">
+          <!-- Rendered NIT code files will appear here -->
+        </div>
+      </section>
 
       <!-- Rendered base code files for NIT -->
       <div id="nit-scenarios-container">
@@ -178,6 +228,9 @@
           downloadNitFullPack(studentInput.value);
         });
       }
+
+      // 3. Render NIT code library files
+      renderNitCodeLibrary();
 
       // 3. Initialize live chat widget with "nit" accent
       initChat("nit");
