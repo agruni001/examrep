@@ -672,139 +672,96 @@ function pickRandomStyle() {
   return PALETTES[index];
 }
 
-function buildIndexPhp(studentName, style = activeStyle) {
-  const sanitizedName = studentName ? studentName.replace(/[<>"]/g, "") : "";
-  const tag = sanitizedName ? `<!-- Personalized for: ${sanitizedName} -->\n` : "";
-  const layoutCSS =
-    style.layout === "center"
-      ? `body{display:flex;align-items:center;justify-content:center;min-height:100vh;}`
-      : style.layout === "top"
-        ? `body{padding-top:60px;text-align:center;}`
-        : `body{display:grid;grid-template-columns:1fr 1fr;align-items:center;min-height:100vh;padding:40px;gap:40px;} .card{margin:0;}`;
+function buildIndexPhp(studentName, accent = "#000000") {
+  const sanitizedName = studentName ? studentName.replace(/[<>\"]/g, "") : "";
+  const titleName = sanitizedName ? ` — ${sanitizedName}` : "";
 
   return `<?php
-${tag}// index.php — Ultrasonic Distance Monitor (NodeMCU + XAMPP)
-// Style preset: ${style.name}
-$distance = "--";
-$time     = "no data yet";
+$host = "localhost";
+$user = "root";
+$password = "";
+$database = "testdb";
 
-if (file_exists("data.txt")) {
-    $raw   = file_get_contents("data.txt");
-    $parts = explode("|", $raw);
-    if (count($parts) == 2) {
-        $distance = $parts[0];
-        $time     = $parts[1];
-    }
+$conn = mysqli_connect($host, $user, $password, $database);
+
+if (!$conn) {
+  die("Connection failed");
 }
 
-$status = "OK";
-$color  = "#16a34a";
-if ($distance !== "--") {
-    if ($distance < 20)      { $status = "DANGER";  $color = "#dc2626"; }
-    else if ($distance < 50) { $status = "WARNING"; $color = "#f59e0b"; }
-}
+$sql = "SELECT * FROM users";
+$result = mysqli_query($conn, $sql);
 ?>
+
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8">
-  <meta http-equiv="refresh" content="2">
-  <title>Ultrasonic Monitor${sanitizedName ? " — " + sanitizedName : ""}</title>
+  <title>Database Test${titleName}</title>
+
   <style>
-    *{box-sizing:border-box;margin:0;padding:0;}
-    body{font-family:${style.font};background:${style.bg};color:${style.text};min-height:100vh;}
-    ${layoutCSS}
-    .card{background:${style.card};padding:40px 60px;border-radius:${style.radius};text-align:center;box-shadow:${style.shadow};min-width:320px;display:inline-block;}
-    h1{font-size:20px;color:${style.muted};font-weight:500;margin-bottom:8px;}
-    .who{font-size:12px;color:${style.accent};margin-bottom:14px;text-transform:uppercase;letter-spacing:2px;}
-    .value{font-size:84px;font-weight:bold;margin:16px 0;color:<?php echo $color; ?>;}
-    .unit{font-size:22px;color:${style.muted};}
-    .status{display:inline-block;padding:6px 18px;border-radius:999px;background:<?php echo $color; ?>;color:#fff;font-weight:bold;margin-top:8px;}
-    .time{margin-top:18px;font-size:12px;color:${style.muted};}
-    .footer{margin-top:20px;font-size:11px;color:${style.muted};opacity:.7;}
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 600px;
+      margin: 40px auto;
+      padding: 20px;
+    }
+
+    h1 {
+      text-align: center;
+    }
+
+    p {
+      padding: 10px;
+      border: 1px solid ${accent};
+      margin: 8px 0;
+      border-radius: 5px;
+    }
   </style>
 </head>
 <body>
-  <div class="card">
-    ${sanitizedName ? `<div class="who">${sanitizedName}</div>` : ""}
-    <h1>Ultrasonic Distance Monitor</h1>
-    <div class="value"><?php echo $distance; ?><span class="unit"> cm</span></div>
-    <div class="status"><?php echo $status; ?></div>
-    <div class="time">Last update: <?php echo $time; ?></div>
-    <div class="footer">NodeMCU + HC-SR04 + XAMPP · style: ${style.name}</div>
-  </div>
+
+<h1>Users</h1>
+
+<?php
+while($row = mysqli_fetch_assoc($result)) {
+  echo "<p>" . htmlspecialchars($row['name']) . "</p>";
+}
+?>
+
 </body>
-</html>
-`;
+</html>`;
 }
 
 // Update the live preview container inside DOM
 function updatePhpPreview(studentName) {
   const previewScreen = document.getElementById("preview-screen");
   if (!previewScreen) return;
+  previewScreen.style.background = "#ffffff";
+  previewScreen.style.color = "#111";
+  previewScreen.style.fontFamily = "Arial, sans-serif";
+  previewScreen.style.display = "block";
+  previewScreen.style.padding = "20px";
 
-  const style = activeStyle;
   const sanitizedName = studentName ? studentName.trim() : "";
-
-  // Apply preview styles
-  previewScreen.style.background = style.bg;
-  previewScreen.style.color = style.text;
-  previewScreen.style.fontFamily = style.font;
-  previewScreen.style.justifyContent = "center";
-  
-  if (style.layout === "split") {
-    previewScreen.style.display = "grid";
-    previewScreen.style.gridTemplateColumns = "1fr";
-  } else {
-    previewScreen.style.display = "flex";
-  }
-
-  // Generate preview card structure
-  const nameHTML = sanitizedName 
-    ? `<div style="font-size: 11px; color: ${style.accent}; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px;">${sanitizedName}</div>`
-    : "";
+  const titleName = sanitizedName ? ` — ${sanitizedName}` : "";
+  const accent = document.getElementById('accent-color-input')?.value || '#000000';
 
   previewScreen.innerHTML = `
-    <div style="
-      background: ${style.card};
-      border-radius: ${style.radius};
-      box-shadow: ${style.shadow};
-      padding: 28px 40px;
-      display: inline-block;
-      min-width: 260px;
-      text-align: center;
-    ">
-      ${nameHTML}
-      <div style="font-size: 16px; color: ${style.muted}; margin-bottom: 6px; font-weight: 500;">Ultrasonic Distance Monitor</div>
-      <div style="font-size: 54px; font-weight: 700; color: #16a34a; margin: 10px 0;">
-        42<span style="font-size: 16px; color: ${style.muted}; font-weight: normal;"> cm</span>
-      </div>
-      <div style="
-        display: inline-block;
-        padding: 4px 14px;
-        border-radius: 999px;
-        background: #16a34a;
-        color: #fff;
-        font-weight: 700;
-        font-size: 11px;
-        text-transform: uppercase;
-        margin-top: 4px;
-      ">OK</div>
-      <div style="margin-top: 14px; font-size: 10px; color: ${style.muted}; opacity: 0.85;">
-        NodeMCU + HC-SR04 + XAMPP · style: ${style.name}
-      </div>
-    </div>
-  `;
+    <h1 style="text-align:center;margin-bottom:20px;">Database Test${titleName}</h1>
+    <div style="max-width:600px;margin:0 auto;padding:20px;font-family:Arial,sans-serif;">
+      <div style="padding:10px;border:1px solid ${accent};margin:8px 0;border-radius:5px;">Example User</div>
+      <div style="padding:10px;border:1px solid ${accent};margin:8px 0;border-radius:5px;">Another User</div>
+    </div>`;
 
   const presetNameLabel = document.getElementById("preview-preset-name");
   if (presetNameLabel) {
-    presetNameLabel.textContent = style.name;
+    presetNameLabel.textContent = "Simple PHP";
   }
 }
 
 // Download personal index.php file
 function downloadPersonalPhp(studentName) {
-  const phpContent = buildIndexPhp(studentName, activeStyle);
+  const accent = document.getElementById('accent-color-input')?.value || '#000000';
+  const phpContent = buildIndexPhp(studentName, accent);
   downloadFile(phpContent, "index.php");
 }
 
@@ -812,12 +769,13 @@ function downloadPersonalPhp(studentName) {
 function downloadNitFullPack(studentName) {
   const ino = nitScenarios[0].code.find((c) => c.filename.endsWith(".ino")).content;
   const data = nitScenarios[0].code.find((c) => c.filename === "data.php").content;
-  const index = buildIndexPhp(studentName, activeStyle);
+  const accent = document.getElementById('accent-color-input')?.value || '#000000';
+  const index = buildIndexPhp(studentName, accent);
 
   const pack = [
     `// ===== ultrasonic_nodemcu.ino =====\n${ino}`,
     `// ===== data.php =====\n${data}`,
-    `// ===== index.php (style: ${activeStyle.name}) =====\n${index}`,
+    `// ===== index.php (simple) =====\n${index}`,
   ].join("\n\n\n");
 
   downloadFile(pack, "ultrasonic-xampp-pack.txt");
@@ -993,6 +951,14 @@ function downloadToolchain(packageName, format) {
 }
 
 let myChart = null;
+const GROUP_ADMIN_PASSCODE = "1234567890";
+let currentJoinedGroup = null;
+
+const groupPalette = [
+  { name: "Group Alpha", color: "#60a5fa" },
+  { name: "Group Beta", color: "#22c55e" },
+  { name: "Group Gamma", color: "#f97316" }
+];
 
 const chartConfig = {
   nit: {
@@ -1006,6 +972,16 @@ const chartConfig = {
     teams: ["A", "B", "C"]
   }
 };
+
+function hexToRgba(hex, alpha) {
+  let c = hex.replace('#', '');
+  if (c.length === 3) c = c.split('').map((ch) => ch + ch).join('');
+  const bigint = parseInt(c, 16);
+  const r = (bigint >> 16) & 255;
+  const g = (bigint >> 8) & 255;
+  const b = bigint & 255;
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
 
 function getDayOptions(track) {
   return chartConfig[track] ? chartConfig[track].days : ["Day 1"];
@@ -1053,74 +1029,91 @@ function buildChartData(track, day, team) {
   };
 }
 
+function buildGroupDatasets(track, day, team) {
+  const dayIndex = getDayOptions(track).indexOf(day);
+  const teamIndex = track === 'nit' ? parseInt(team, 10) - 1 : team.charCodeAt(0) - 65;
+  const labels = track === 'nit'
+    ? ['Planning', 'Coding', 'Testing', 'Review']
+    : ['IR', 'DHT', 'MQ', 'Keypad', 'Soil'];
+
+  const datasets = groupPalette.map((group, index) => {
+    const teamOffset = isNaN(teamIndex) ? 0 : teamIndex * 2;
+    const baseValue = 45 + dayIndex * 5 + index * 4 + teamOffset;
+    const rawData = track === 'nit'
+      ? [baseValue, baseValue + 12, baseValue + 5, baseValue - 2]
+      : [baseValue, baseValue - 5, baseValue + 6, baseValue - 2, baseValue + 3];
+
+    const data = rawData.map((value) => Math.max(15, Math.min(100, value + index * 2)));
+    const isJoined = currentJoinedGroup === group.name;
+    const color = group.color;
+
+    return {
+      label: `${group.name} (${team})`,
+      data,
+      borderColor: color,
+      backgroundColor: track === 'nit' ? hexToRgba(color, 0.28) : hexToRgba(color, 0.18),
+      tension: 0.3,
+      fill: track === 'nit',
+      borderWidth: isJoined ? 3 : 2,
+      pointStyle: track === 'csa' ? 'rectRot' : 'circle',
+      pointRadius: isJoined ? 5 : 3,
+      borderDash: track === 'csa' ? [6, 4] : []
+    };
+  });
+
+  return {
+    labels,
+    datasets,
+    label: `${chartConfig[track].label} Groups`
+  };
+}
+
 function updateChart(track, day, team) {
-  const chartData = buildChartData(track, day, team);
-
-  // Decide chart type per track: NIT uses a bar chart, CSA uses a line chart
-  const desiredType = track === "nit" ? "bar" : "line";
-
+  const chartData = buildGroupDatasets(track, day, team);
+  const desiredType = track === 'nit' ? 'bar' : 'line';
   createChartWithData(desiredType, chartData);
+  const trackLabel = document.getElementById('selected-track-label');
+  if (trackLabel) {
+    trackLabel.textContent = chartConfig[track].label;
+  }
 }
 
 // Create or recreate the Chart.js instance with the provided type and data
 function createChartWithData(type, chartData) {
   const ctx = document.getElementById('dashboardChart');
-  if (!ctx || typeof Chart === "undefined") return;
+  if (!ctx || typeof Chart === 'undefined') return;
 
-  // If a chart exists but type differs, destroy and recreate
   if (myChart && myChart.config && myChart.config.type !== type) {
     myChart.destroy();
     myChart = null;
   }
 
-  // If no chart, create one
-  if (!myChart) {
-    myChart = new Chart(ctx, {
-      type: type,
-      data: {
-        labels: chartData.labels,
-        datasets: [{
-          label: chartData.label,
-          data: chartData.data,
-          borderColor: chartData.color,
-          backgroundColor: chartData.color,
-          tension: 0.3,
-          fill: type === 'bar' ? true : false,
-          borderWidth: 2
-        }]
+  const config = {
+    type,
+    data: {
+      labels: chartData.labels,
+      datasets: chartData.datasets
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: true, labels: { color: '#d7f6f3' } },
+        title: { display: true, text: chartData.label, color: '#94a3b8', font: { size: 14, weight: '600' } }
       },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: { display: false },
-          title: { display: true, text: chartData.label, color: '#94a3b8', font: { size: 14, weight: '600' } }
-        },
-        scales: {
-          y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.06)' } },
-          x: { grid: { display: false } }
-        }
+      scales: {
+        y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.06)' } },
+        x: { grid: { display: false }, ticks: { color: '#d7f6f3' } }
       }
-    });
-  } else {
-    // Update data & styling for existing chart
-    myChart.data.labels = chartData.labels;
-    myChart.data.datasets[0].data = chartData.data;
-    myChart.data.datasets[0].label = chartData.label;
-    myChart.data.datasets[0].borderColor = chartData.color;
-
-    if (type === 'bar') {
-      myChart.data.datasets[0].backgroundColor = chartData.color;
-      myChart.options.plugins.title.text = chartData.label;
-      myChart.options.scales = myChart.options.scales || {};
-    } else {
-      myChart.data.datasets[0].backgroundColor = 'rgba(34,197,94,0.12)';
-      myChart.data.datasets[0].borderDash = [6, 4];
-      myChart.data.datasets[0].pointStyle = 'rectRot';
-      myChart.data.datasets[0].borderWidth = 3;
-      myChart.options.plugins.title.text = chartData.label;
     }
+  };
 
+  if (!myChart) {
+    myChart = new Chart(ctx, config);
+  } else {
+    myChart.config.type = type;
+    myChart.config.data = config.data;
+    myChart.config.options = config.options;
     myChart.update();
   }
 }
@@ -1129,6 +1122,8 @@ function populateChartControls() {
   const trackSelect = document.getElementById("track-select");
   const daySelect = document.getElementById("day-select");
   const teamSelect = document.getElementById("team-select");
+  const groupSelect = document.getElementById("group-select");
+  const joinGroupSelect = document.getElementById("join-group-select");
 
   if (!trackSelect || !daySelect || !teamSelect) return;
 
@@ -1138,34 +1133,149 @@ function populateChartControls() {
 
   function refreshDayOptions() {
     const track = trackSelect.value;
-    daySelect.innerHTML = getDayOptions(track)
+    const previousDay = daySelect.value;
+    const dayOptions = getDayOptions(track);
+    daySelect.innerHTML = dayOptions
       .map((day) => `<option value="${day}">${day}</option>`)
       .join("");
+    if (previousDay && dayOptions.includes(previousDay)) {
+      daySelect.value = previousDay;
+    }
   }
 
   function refreshTeamOptions() {
     const track = trackSelect.value;
-    teamSelect.innerHTML = getTeamOptions(track)
+    const previousTeam = teamSelect.value;
+    const teamOptions = getTeamOptions(track);
+    teamSelect.innerHTML = teamOptions
       .map((team) => `<option value="${team}">${track === "nit" ? `Team ${team}` : `Group ${team}`}</option>`)
       .join("");
+    if (previousTeam && teamOptions.includes(previousTeam)) {
+      teamSelect.value = previousTeam;
+    }
+  }
+
+  function refreshGroupSelectors() {
+    const selectedGroup = groupSelect?.value || currentJoinedGroup || "";
+    const html = groupPalette
+      .map((group) => `<option value="${group.name}">${group.name}</option>`)
+      .join("");
+
+    if (groupSelect) {
+      groupSelect.innerHTML = `<option value="">All groups</option>${html}`;
+      if (selectedGroup) {
+        groupSelect.value = selectedGroup;
+      }
+    }
+    if (joinGroupSelect) {
+      joinGroupSelect.innerHTML = html;
+      if (selectedGroup) {
+        joinGroupSelect.value = selectedGroup;
+      }
+    }
+    updateGroupWidgets();
   }
 
   trackSelect.addEventListener("change", () => {
     refreshDayOptions();
     refreshTeamOptions();
     updateChart(trackSelect.value, daySelect.value, teamSelect.value);
+    refreshGroupSelectors();
   });
 
-  daySelect.addEventListener("change", () => {
-    updateChart(trackSelect.value, daySelect.value, teamSelect.value);
-  });
+  if (groupSelect) {
+    groupSelect.addEventListener("change", () => {
+      const selected = groupSelect.value;
+      currentJoinedGroup = selected || null;
+      updateChart(trackSelect.value, daySelect.value, teamSelect.value);
+    });
+  }
 
-  teamSelect.addEventListener("change", () => {
-    updateChart(trackSelect.value, daySelect.value, teamSelect.value);
-  });
+  if (daySelect) {
+    daySelect.addEventListener("change", () => {
+      updateChart(trackSelect.value, daySelect.value, teamSelect.value);
+    });
+  }
+
+  if (teamSelect) {
+    teamSelect.addEventListener("change", () => {
+      updateChart(trackSelect.value, daySelect.value, teamSelect.value);
+    });
+  }
 
   refreshDayOptions();
   refreshTeamOptions();
+  refreshGroupSelectors();
+}
+
+function updateGroupWidgets() {
+  const groupCount = document.getElementById('group-count');
+  const joinedGroupName = document.getElementById('joined-group-name');
+  const adminStatus = document.getElementById('admin-status');
+
+  if (groupCount) groupCount.textContent = String(groupPalette.length);
+  if (joinedGroupName) joinedGroupName.textContent = currentJoinedGroup || 'None';
+  if (adminStatus) adminStatus.textContent = 'Ready';
+}
+
+function createGroup(name, passcode) {
+  const message = document.getElementById('group-create-message');
+  if (passcode !== GROUP_ADMIN_PASSCODE) {
+    if (message) message.textContent = 'Incorrect passcode. Only admin can create a group.';
+    showToast('Admin passcode denied', 'error');
+    return;
+  }
+
+  const trimmed = name.trim();
+  if (!trimmed) {
+    if (message) message.textContent = 'Please enter a valid group name.';
+    return;
+  }
+
+  if (groupPalette.some((group) => group.name.toLowerCase() === trimmed.toLowerCase())) {
+    if (message) message.textContent = 'A group with that name already exists.';
+    return;
+  }
+
+  const colors = ['#60a5fa', '#22c55e', '#f97316', '#a855f7', '#ec4899', '#f59e0b', '#38bdf8'];
+  const nextColor = colors[groupPalette.length % colors.length];
+  groupPalette.push({ name: trimmed, color: nextColor });
+
+  if (message) message.textContent = `Group "${trimmed}" created. Students can join it now.`;
+  const passcodeInput = document.getElementById('admin-passcode-input');
+  const groupNameInput = document.getElementById('new-group-name-input');
+  if (passcodeInput) passcodeInput.value = '';
+  if (groupNameInput) groupNameInput.value = '';
+  showToast(`Group ${trimmed} created`, 'success');
+  populateChartControls();
+  updateChart(document.getElementById('track-select').value, document.getElementById('day-select').value, document.getElementById('team-select').value);
+}
+
+function joinGroup() {
+  const joinGroupSelect = document.getElementById('join-group-select');
+  const message = document.getElementById('join-message');
+  if (!joinGroupSelect) return;
+
+  const groupName = joinGroupSelect.value;
+  if (!groupName) {
+    if (message) message.textContent = 'Choose a group to join first.';
+    return;
+  }
+
+  currentJoinedGroup = groupName;
+  const groupSelect = document.getElementById('group-select');
+  if (groupSelect) {
+    groupSelect.value = groupName;
+  }
+  if (message) message.textContent = `Joined ${groupName}. Your group is now highlighted.`;
+  showToast(`Joined ${groupName}`, 'success');
+  updateGroupWidgets();
+  const trackSelect = document.getElementById('track-select');
+  const daySelect = document.getElementById('day-select');
+  const teamSelect = document.getElementById('team-select');
+  if (trackSelect && daySelect && teamSelect) {
+    updateChart(trackSelect.value, daySelect.value, teamSelect.value);
+  }
 }
 
 function promptChartQuery() {
