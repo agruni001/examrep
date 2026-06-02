@@ -604,6 +604,39 @@ function downloadFile(content, filename) {
   showToast(`Downloaded ${filename}`);
 }
 
+// Helpers to safely handle arbitrary file content via Base64 (avoids HTML attribute parsing issues)
+function b64ToUtf8(b64) {
+  try {
+    // atob -> percent-encoding -> decodeURIComponent to support Unicode
+    return decodeURIComponent(Array.prototype.map.call(atob(b64), function(c) {
+      return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+    }).join(''));
+  } catch (e) {
+    // fallback
+    return atob(b64);
+  }
+}
+
+function downloadFromBase64(b64, filename) {
+  const content = b64ToUtf8(b64);
+  downloadFile(content, filename);
+}
+
+function copyFromBase64(b64, btnElement, filename) {
+  const content = b64ToUtf8(b64);
+  copyCode(content, btnElement, filename);
+}
+
+function utf8ToB64(str) {
+  try {
+    return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, function(match, p1) {
+      return String.fromCharCode('0x' + p1);
+    }));
+  } catch (e) {
+    return btoa(str);
+  }
+}
+
 function downloadCsaPack(list) {
   const parts = list.map(
     (s) =>
@@ -628,6 +661,8 @@ const PALETTES = [
   { name: "Ocean",     bg: "#082f49", card: "#0c4a6e", text: "#e0f2fe", muted: "#7dd3fc", accent: "#facc15", font: "Helvetica, sans-serif",     radius: "14px", shadow: "0 10px 30px rgba(0,0,0,.4)",      layout: "split"  },
   { name: "Sand",      bg: "#fef3c7", card: "#fffbeb", text: "#451a03", muted: "#92400e", accent: "#b45309", font: "Georgia, serif",            radius: "12px", shadow: "0 8px 20px rgba(180,83,9,.2)",    layout: "top"    },
   { name: "Slate",     bg: "#1f2937", card: "#374151", text: "#f9fafb", muted: "#d1d5db", accent: "#60a5fa", font: "Arial, sans-serif",         radius: "10px", shadow: "0 10px 30px rgba(0,0,0,.4)",      layout: "center" },
+  { name: "Basic Light", bg: "#ffffff", card: "#f3f4f6", text: "#000000", muted: "#4b5563", accent: "#3b82f6", font: "system-ui, sans-serif",     radius: "8px",  shadow: "0 2px 4px rgba(0,0,0,.1)",        layout: "center" },
+  { name: "Basic Dark",  bg: "#111827", card: "#1f2937", text: "#ffffff", muted: "#9ca3af", accent: "#60a5fa", font: "system-ui, sans-serif",     radius: "8px",  shadow: "0 4px 6px rgba(0,0,0,.3)",        layout: "center" }
 ];
 
 let activeStyle = PALETTES[0];
@@ -823,6 +858,7 @@ function renderScenarioCard(scenario, index, accent = "csa") {
         .replace(/</g, "&lt;")
         .replace(/>/g, "&gt;");
 
+      const b64 = utf8ToB64(c.content);
       return `
         <div class="code-wrapper">
           <div class="code-header">
@@ -836,10 +872,10 @@ function renderScenarioCard(scenario, index, accent = "csa") {
               <span class="code-lang-tag">${c.language}</span>
             </div>
             <div class="code-actions">
-              <button onclick="downloadFile(\`${c.content.replace(/`/g, '\\`').replace(/\$/g, '\\$')}\`, '${c.filename}')">
+              <button onclick="downloadFromBase64('${b64}', '${c.filename}')">
                 <i class="lucide-download" data-lucide="download"></i> Save
               </button>
-              <button class="copy-btn" onclick="copyCode(\`${c.content.replace(/`/g, '\\`').replace(/\$/g, '\\$')}\`, this, '${c.filename}')">
+              <button class="copy-btn" onclick="copyFromBase64('${b64}', this, '${c.filename}')">
                 <i class="lucide-copy" data-lucide="copy"></i> Copy
               </button>
             </div>
@@ -894,6 +930,47 @@ function renderScenarioCard(scenario, index, accent = "csa") {
   `;
 }
 
+function renderNitCodeLibrary() {
+  const libraryContainer = document.getElementById("nit-code-library");
+  if (!libraryContainer || !nitScenarios.length) return;
+
+  const files = nitScenarios[0].code;
+  libraryContainer.innerHTML = files
+    .map((file) => {
+      const escapedCode = file.content
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+
+      const b64 = utf8ToB64(file.content);
+
+      return `
+        <article class="code-library-card">
+          <div class="code-library-card-header">
+            <div>
+              <span class="file-chip">${file.language.toUpperCase()}</span>
+              <h3>${file.filename}</h3>
+            </div>
+            <div class="code-library-card-actions">
+              <button class="btn btn-outline btn-sm" onclick="downloadFromBase64('${b64}', '${file.filename}')">
+                <i data-lucide="download"></i> Download
+              </button>
+              <button class="btn btn-outline btn-sm" onclick="copyFromBase64('${b64}', this, '${file.filename}')">
+                <i data-lucide="copy"></i> Copy
+              </button>
+            </div>
+          </div>
+          <pre class="code-snippet"><code>${escapedCode}</code></pre>
+        </article>
+      `;
+    })
+    .join("");
+
+  if (typeof lucide !== "undefined") {
+    lucide.createIcons();
+  }
+}
+
 function toggleScenarioCard(id) {
   const card = document.getElementById(`scenario-${id}`);
   if (card) {
@@ -915,65 +992,253 @@ function downloadToolchain(packageName, format) {
   }, 1200);
 }
 
-function initDashboardStats() {
-  const cActive = document.getElementById("stat-candidates");
-  const dbHealth = document.getElementById("stat-db-health");
-  const socketPing = document.getElementById("stat-ping");
-  const logTerminal = document.getElementById("log-terminal");
-  
-  if (!cActive || !dbHealth || !socketPing || !logTerminal) return;
+let myChart = null;
 
-  // Initialize terminal starting line
-  logTerminal.innerHTML = `
-    <div class="terminal-line"><span class="terminal-time">[${new Date().toLocaleTimeString()}]</span> TSS Toolchain DevSuite initialized. Listening on port 8080...</div>
-    <div class="terminal-line"><span class="terminal-time">[${new Date().toLocaleTimeString()}]</span> Connected to public.chat_messages via Supabase Client. WebSocket OPEN.</div>
-  `;
+const chartConfig = {
+  nit: {
+    label: "NIT",
+    days: ["Day 1", "Day 2", "Day 3"],
+    teams: Array.from({ length: 9 }, (_, index) => `${index + 1}`)
+  },
+  csa: {
+    label: "CSA",
+    days: ["Day 1", "Day 2", "Day 3"],
+    teams: ["A", "B", "C"]
+  }
+};
 
-  // Animate numbers and chart bars
-  setInterval(() => {
-    // 1. Update values
-    const currentCandidates = parseInt(cActive.textContent) || 12;
-    const candidatesChange = Math.floor(Math.random() * 3) - 1; // -1, 0, 1
-    cActive.textContent = Math.max(8, currentCandidates + candidatesChange);
-
-    const ping = Math.floor(Math.random() * 25) + 12;
-    socketPing.textContent = `${ping}ms`;
-
-    const cpu = Math.floor(Math.random() * 15) + 5;
-    dbHealth.textContent = `${cpu}%`;
-
-    // 2. Animate chart columns height
-    const bars = document.querySelectorAll(".chart-bar");
-    bars.forEach((bar) => {
-      const newHeight = Math.floor(Math.random() * 70) + 15; // 15% - 85%
-      bar.style.height = `${newHeight}%`;
-    });
-
-    // 3. Output mock terminal logs
-    const activities = [
-      "Fetched latest chat logs successfully (HTTP 200)",
-      "Supabase DB insert triggered from IP 192.168.1.144",
-      "Arduino driver compilation completed successfully",
-      "XAMPP server index.php served successfully",
-      "Realtime stream channel heart-beat verified",
-      "Candidate downloaded ultrasonic-xampp-pack.txt package",
-      "Personalized PHP template re-rolled: Sunset theme style"
-    ];
-    const chosenActivity = activities[Math.floor(Math.random() * activities.length)];
-    
-    const line = document.createElement("div");
-    line.className = "terminal-line";
-    line.innerHTML = `<span class="terminal-time">[${new Date().toLocaleTimeString()}]</span> ${chosenActivity}`;
-    logTerminal.appendChild(line);
-    logTerminal.scrollTop = logTerminal.scrollHeight;
-
-    // Cap terminal lines at 20
-    if (logTerminal.children.length > 20) {
-      logTerminal.removeChild(logTerminal.firstElementChild);
-    }
-  }, 4000);
+function getDayOptions(track) {
+  return chartConfig[track] ? chartConfig[track].days : ["Day 1"];
 }
 
+function getTeamOptions(track) {
+  return chartConfig[track] ? chartConfig[track].teams : ["1"];
+}
+
+function formatChartTitle(track, day, team) {
+  const division = chartConfig[track] ? chartConfig[track].label : "Exam";
+  const teamLabel = track === "nit" ? `Team ${team}` : `Group ${team}`;
+  return `${division} · ${day} · ${teamLabel}`;
+}
+
+function buildChartData(track, day, team) {
+  const title = formatChartTitle(track, day, team);
+  const dayIndex = getDayOptions(track).indexOf(day);
+  const teamIndex = track === "nit" ? parseInt(team, 10) - 1 : team.charCodeAt(0) - 65;
+  const baseValue = 55 + (teamIndex * 3) + (dayIndex * 4);
+
+  let labels = [];
+  let data = [];
+  let color = "#4f46e5";
+
+  if (track === "nit") {
+    labels = ["Planning", "Coding", "Testing", "Review"];
+    data = [baseValue, baseValue + 8, baseValue + 3, baseValue - 5].map((value) => Math.max(15, Math.min(100, value)));
+    color = "#60a5fa";
+  } else if (track === "csa") {
+    labels = ["IR", "DHT", "MQ", "Keypad", "Soil"];
+    data = [baseValue, baseValue - 7, baseValue + 5, baseValue - 3, baseValue + 2].map((value) => Math.max(15, Math.min(100, value)));
+    color = "#22c55e";
+  } else {
+    labels = ["Planning", "Build", "Test", "Submit"];
+    data = [65, 70, 60, 80];
+    color = "#f97316";
+  }
+
+  return {
+    labels,
+    data,
+    label: title,
+    color
+  };
+}
+
+function updateChart(track, day, team) {
+  const chartData = buildChartData(track, day, team);
+
+  // Decide chart type per track: NIT uses a bar chart, CSA uses a line chart
+  const desiredType = track === "nit" ? "bar" : "line";
+
+  createChartWithData(desiredType, chartData);
+}
+
+// Create or recreate the Chart.js instance with the provided type and data
+function createChartWithData(type, chartData) {
+  const ctx = document.getElementById('dashboardChart');
+  if (!ctx || typeof Chart === "undefined") return;
+
+  // If a chart exists but type differs, destroy and recreate
+  if (myChart && myChart.config && myChart.config.type !== type) {
+    myChart.destroy();
+    myChart = null;
+  }
+
+  // If no chart, create one
+  if (!myChart) {
+    myChart = new Chart(ctx, {
+      type: type,
+      data: {
+        labels: chartData.labels,
+        datasets: [{
+          label: chartData.label,
+          data: chartData.data,
+          borderColor: chartData.color,
+          backgroundColor: chartData.color,
+          tension: 0.3,
+          fill: type === 'bar' ? true : false,
+          borderWidth: 2
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          title: { display: true, text: chartData.label, color: '#94a3b8', font: { size: 14, weight: '600' } }
+        },
+        scales: {
+          y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.06)' } },
+          x: { grid: { display: false } }
+        }
+      }
+    });
+  } else {
+    // Update data & styling for existing chart
+    myChart.data.labels = chartData.labels;
+    myChart.data.datasets[0].data = chartData.data;
+    myChart.data.datasets[0].label = chartData.label;
+    myChart.data.datasets[0].borderColor = chartData.color;
+
+    if (type === 'bar') {
+      myChart.data.datasets[0].backgroundColor = chartData.color;
+      myChart.options.plugins.title.text = chartData.label;
+      myChart.options.scales = myChart.options.scales || {};
+    } else {
+      myChart.data.datasets[0].backgroundColor = 'rgba(34,197,94,0.12)';
+      myChart.data.datasets[0].borderDash = [6, 4];
+      myChart.data.datasets[0].pointStyle = 'rectRot';
+      myChart.data.datasets[0].borderWidth = 3;
+      myChart.options.plugins.title.text = chartData.label;
+    }
+
+    myChart.update();
+  }
+}
+
+function populateChartControls() {
+  const trackSelect = document.getElementById("track-select");
+  const daySelect = document.getElementById("day-select");
+  const teamSelect = document.getElementById("team-select");
+
+  if (!trackSelect || !daySelect || !teamSelect) return;
+
+  trackSelect.innerHTML = Object.keys(chartConfig)
+    .map((track) => `<option value="${track}">${chartConfig[track].label}</option>`)
+    .join("");
+
+  function refreshDayOptions() {
+    const track = trackSelect.value;
+    daySelect.innerHTML = getDayOptions(track)
+      .map((day) => `<option value="${day}">${day}</option>`)
+      .join("");
+  }
+
+  function refreshTeamOptions() {
+    const track = trackSelect.value;
+    teamSelect.innerHTML = getTeamOptions(track)
+      .map((team) => `<option value="${team}">${track === "nit" ? `Team ${team}` : `Group ${team}`}</option>`)
+      .join("");
+  }
+
+  trackSelect.addEventListener("change", () => {
+    refreshDayOptions();
+    refreshTeamOptions();
+    updateChart(trackSelect.value, daySelect.value, teamSelect.value);
+  });
+
+  daySelect.addEventListener("change", () => {
+    updateChart(trackSelect.value, daySelect.value, teamSelect.value);
+  });
+
+  teamSelect.addEventListener("change", () => {
+    updateChart(trackSelect.value, daySelect.value, teamSelect.value);
+  });
+
+  refreshDayOptions();
+  refreshTeamOptions();
+}
+
+function promptChartQuery() {
+  const trackSelect = document.getElementById("track-select");
+  const daySelect = document.getElementById("day-select");
+  const teamSelect = document.getElementById("team-select");
+
+  if (!trackSelect || !daySelect || !teamSelect) return;
+
+  showToast("Refreshing group progress chart...");
+  updateChart(trackSelect.value, daySelect.value, teamSelect.value);
+}
+
+function initDashboardStats() {
+  const trackSelect = document.getElementById("track-select");
+  const daySelect = document.getElementById("day-select");
+  const teamSelect = document.getElementById("team-select");
+
+  if (!trackSelect || !daySelect || !teamSelect) return;
+
+  populateChartControls();
+
+  const ctx = document.getElementById('dashboardChart');
+  if (ctx && typeof Chart !== "undefined") {
+    Chart.defaults.color = "#94a3b8";
+    Chart.defaults.font.family = '"Space Grotesk", sans-serif';
+
+    myChart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: ['Phase 1', 'Phase 2', 'Phase 3', 'Phase 4'],
+        datasets: [{
+          label: 'Group progress',
+          data: [60, 72, 68, 81],
+          borderColor: '#60a5fa',
+          backgroundColor: 'rgba(96, 165, 250, 0.18)',
+          tension: 0.4,
+          fill: true
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          title: { display: true, text: 'Group progress overview', color: '#94a3b8', font: { size: 14, weight: '600' } }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            grid: { color: 'rgba(255, 255, 255, 0.08)' }
+          },
+          x: {
+            grid: { display: false }
+          }
+        }
+      }
+    });
+  }
+
+  if (trackSelect && daySelect && teamSelect) {
+    updateChart(trackSelect.value, daySelect.value, teamSelect.value);
+  }
+
+  setInterval(() => {
+    if (!myChart) return;
+    myChart.data.datasets[0].data = myChart.data.datasets[0].data.map((value) => {
+      const drift = Math.floor(Math.random() * 7) - 3;
+      return Math.max(15, Math.min(100, value + drift));
+    });
+    myChart.update('none');
+  }, 7000);
+}
 // Initial script hooks for UI icons load
 document.addEventListener("DOMContentLoaded", () => {
   if (typeof lucide !== "undefined") {
