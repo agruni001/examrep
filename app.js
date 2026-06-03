@@ -685,17 +685,17 @@ $database = "security_db";
 $conn = mysqli_connect($host, $user, $password, $database);
 
 if (!$conn) {
-  die("Connection failed");
+    die("Connection failed: " . mysqli_connect_error());
 }
 
-$sql = "SELECT * FROM intrusion_events";
+$sql = "SELECT id, distance FROM intrusion_events"; // Specific columns are faster
 $result = mysqli_query($conn, $sql);
 ?>
 
 <!DOCTYPE html>
 <html>
 <head>
-  <title>${titleName}</title>
+  <title> ${titleName} </title>
 
   <style>
     body {
@@ -709,11 +709,25 @@ $result = mysqli_query($conn, $sql);
       text-align: center;
     }
 
-    p {
-      padding: 10px;
-      border: 1px solid ${accent};
-      margin: 8px 0;
-      border-radius: 5px;
+    /* Styled the table for a cleaner look */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+
+    th, td {
+      padding: 12px;
+      text-align: left;
+      border: 1px solid #3cd71d;
+    }
+
+    th {
+      background-color: #f2f2f2;
+    }
+
+    tr:nth-child(even) {
+      background-color: #f9f9f9;
     }
   </style>
 </head>
@@ -721,11 +735,25 @@ $result = mysqli_query($conn, $sql);
 
 <h1>INTRUSION DETECTION SYSTEM BY ${titleName}</h1>
 
-<?php
-while($row = mysqli_fetch_assoc($result)) {
-  echo "<p>" . htmlspecialchars($row['distance']) . "</p>";
-}
-?>
+<table>
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Distance</th>
+    </tr>
+  </thead>
+  <tbody>
+    <?php
+    // Loop through the results and build table rows properly
+    while($row = mysqli_fetch_assoc($result)) {
+        echo "<tr>";
+        echo "<td>" . htmlspecialchars($row['id']) . "</td>";
+        echo "<td>" . htmlspecialchars($row['distance']) . "</td>";
+        echo "</tr>";
+    }
+    ?>
+  </tbody>
+</table>
 
 </body>
 </html>`;
