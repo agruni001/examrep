@@ -403,166 +403,125 @@ const nitScenarios = [
       {
         language: "cpp",
         filename: "ultrasonic_nodemcu.ino",
-        content: `// NodeMCU ESP8266 + HC-SR04 -> PHP web app
-// Wiring:
-//   HC-SR04 VCC -> Vin (5V)   GND -> GND
-//   TRIG -> D5 (GPIO14)       ECHO -> D6 (GPIO12)
+        content: `#include <WiFi.h>
+#include <HTTPClient.h>
 
-#include <ESP8266WiFi.h>
-#include <ESP8266HTTPClient.h>
-#include <WiFiClient.h>
+#define TRIG 22
+#define ECHO 21
+#define buzzer 17
+#define red 18
 
-#define TRIG D5
-#define ECHO D6
+const char* SSID = "David";
+const char* PASS = "day1@2026";
 
-const char* SSID = "YourWiFi";
-const char* PASS = "YourPassword";
 
-// Change to your server URL (XAMPP: http://192.168.1.10/iot/data.php)
 const char* SERVER = "http://192.168.1.10/iot/data.php";
-
-long readDistanceCM() {
-  digitalWrite(TRIG, LOW);  delayMicroseconds(2);
-  digitalWrite(TRIG, HIGH); delayMicroseconds(10);
-  digitalWrite(TRIG, LOW);
-  long t = pulseIn(ECHO, HIGH, 30000); // timeout 30ms
-  if (t == 0) return -1;
-  return t / 58; // microseconds -> centimeters
-}
 
 void setup() {
   Serial.begin(115200);
   pinMode(TRIG, OUTPUT);
   pinMode(ECHO, INPUT);
+  pinMode(buzzer, OUTPUT);
+  pinMode(red, OUTPUT);
 
   WiFi.begin(SSID, PASS);
   Serial.print("Connecting");
-  while (WiFi.status() != WL_CONNECTED) { delay(400); Serial.print("."); }
+  while (WiFi.status() != WL_CONNECTED) { 
+  delay(400); 
+  Serial.print("."); }
   Serial.println();
-  Serial.print("Connected. IP: "); Serial.println(WiFi.localIP());
+  Serial.print("Connected. IP: ");
+  Serial.println(WiFi.localIP());
+
 }
 
 void loop() {
-  long cm = readDistanceCM();
-  Serial.print("Distance: "); Serial.print(cm); Serial.println(" cm");
+  digitalWrite(TRIG, LOW);
+  delayMicroseconds(2);
+  digitalWrite(TRIG, HIGH);
+  delayMicroseconds(10); 
+  digitalWrite(TRIG, LOW);
 
-  if (WiFi.status() == WL_CONNECTED && cm >= 0) {
-    WiFiClient client;
+  long duration = pulseIn(ECHO, HIGH);
+   
+  float cm = (duration * 0.034)/2;
+  Serial.print("Distance: "); 
+  Serial.print(cm); 
+  Serial.println(" cm");
+
+  if(cm <= 400){
+  digitalWrite(red, HIGH);
+  delay(300);
+  digitalWrite(red, LOW);
+  digitalWrite(buzzer, HIGH);
+  delay(300);
+  digitalWrite(buzzer, LOW);
+  String status = "Danger";
+  String image = "Image captured";
+  
+  }
+
+  else{
+  digitalWrite(red, LOW);
+  digitalWrite(buzzer, LOW);
+  String status = "safe zone";
+  String image = "No image captured";
+  
+  }
+
+  if (WiFi.status() == WL_CONNECTED) {
+  
     HTTPClient http;
-    String url = String(SERVER) + "?distance=" + String(cm);
-    http.begin(client, url);
-    int code = http.GET();
-    Serial.print("HTTP "); Serial.println(code);
+    http.begin(SERVER);
+    String data = "distance=" + String(cm)
+                + "&status=" + status
+                + "&image=" + image; 
+    int code = http.POST(data);
+    Serial.print("HTTP code: ");
+    Serial.println(code);
     http.end();
   }
 
-  delay(2000);
-}`,
+  `,
       },
       {
         language: "php",
         filename: "data.php",
         content: `<?php
-// data.php — receives distance from NodeMCU and stores it.
-// Call:  data.php?distance=42
+$host = "localhost";
+$user = "root";
+$password = "";
+$database = "security_db";
 
-if (isset($_GET['distance'])) {
-    $distance = intval($_GET['distance']);
-    $time     = date("Y-m-d H:i:s");
-    $line     = $distance . "|" . $time;
+$conn = mysqli_connect($host, $user, $password, $database);
 
-    // Save latest reading
-    file_put_contents("data.txt", $line);
+if (!$conn) {
+    die("Connection failed: " . mysqli_connect_error());
+}
 
-    // Append to log (optional history)
-    file_put_contents("log.txt", $line . PHP_EOL, FILE_APPEND);
+if ($_SERVER["REQUEST_METHOD"] === "POST") {
+    $distance = $_POST['distance'];
+    $status     = $_POST['status'];
+    $image     = $_POST['image'];
 
-    echo "OK saved: " . $distance . " cm at " . $time;
-} else {
-    echo "No distance received.";
+    $sql = "INSERT INTO intrusion_events(image_path, distance, event_status) VALUES('$image', '$distance', '$status')";
+    $result = $conn -> query($sql);
+    if ($result === TRUE) {
+        echo "data inserted successfully!";
+  } 
+else {
+    echo "No data received.";
+}
+}
+else{
+    echo "Invalid HTTP method";
 }
 ?>`,
       },
       {
         language: "php",
         filename: "index.php",
-        content: `<?php
-// index.php — shows the latest distance reading.
-$distance = "--";
-$time     = "no data yet";
-
-if (file_exists("data.txt")) {
-    $raw   = file_get_contents("data.txt");
-    $parts = explode("|", $raw);
-    if (count($parts) == 2) {
-        $distance = $parts[0];
-        $time     = $parts[1];
-    }
-}
-
-// Decide status color
-$status = "OK";
-$color  = "#16a34a";
-if ($distance !== "--") {
-    if ($distance < 20)      { $status = "DANGER"; $color = "#dc2626"; }
-    else if ($distance < 50) { $status = "WARNING"; $color = "#f59e0b"; }
-}
-?>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta http-equiv="refresh" content="2"> <!-- auto refresh -->
-  <title>Ultrasonic Monitor</title>
-  <style>
-    * { box-sizing: border-box; }
-    body {
-      font-family: Arial, sans-serif;
-      background: #0f172a;
-      color: #f1f5f9;
-      margin: 0;
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .card {
-      background: #1e293b;
-      padding: 40px 60px;
-      border-radius: 16px;
-      text-align: center;
-      box-shadow: 0 10px 40px rgba(0,0,0,.4);
-      min-width: 320px;
-    }
-    h1 { margin: 0 0 8px; font-size: 22px; color: #94a3b8; font-weight: 500; }
-    .value {
-      font-size: 84px;
-      font-weight: bold;
-      margin: 16px 0;
-      color: <?php echo $color; ?>;
-    }
-    .unit { font-size: 24px; color: #94a3b8; }
-    .status {
-      display: inline-block;
-      padding: 6px 16px;
-      border-radius: 999px;
-      background: <?php echo $color; ?>;
-      color: white;
-      font-weight: bold;
-      margin-top: 8px;
-    }
-    .time { margin-top: 18px; font-size: 12px; color: #64748b; }
-  </style>
-</head>
-<body>
-  <div class="card">
-    <h1>Ultrasonic Distance Monitor</h1>
-    <div class="value"><?php echo $distance; ?><span class="unit"> cm</span></div>
-    <div class="status"><?php echo $status; ?></div>
-    <div class="time">Last update: <?php echo $time; ?></div>
-  </div>
-</body>
-</html>`,
+        content: ``,
       },
     ],
   },
@@ -695,7 +654,7 @@ $result = mysqli_query($conn, $sql);
 <!DOCTYPE html>
 <html>
 <head>
-  <title> ${titleName} </title>
+  <title>  — tresor </title>
 
   <style>
     body {
@@ -733,14 +692,17 @@ $result = mysqli_query($conn, $sql);
 </head>
 <body>
 
-<h1>INTRUSION DETECTION SYSTEM BY ${titleName}</h1>
+<h1>INTRUSION DETECTION SYSTEM BY  — tresor</h1>
 
 <table>
   <thead>
     <tr>
       <th>ID</th>
+      <th>image path</th>
       <th>Distance</th>
-       <th>Distance</th>
+      <th>event status</th>
+      <th>time_stamp</th>
+     
     </tr>
   </thead>
   <tbody>
@@ -749,9 +711,10 @@ $result = mysqli_query($conn, $sql);
     while($row = mysqli_fetch_assoc($result)) {
         echo "<tr>";
         echo "<td>" . htmlspecialchars($row['id']) . "</td>";
+        echo "<td>". htmlspecialchars($row["image_path"]) ."</td>";
         echo "<td>" . htmlspecialchars($row['distance']) . "</td>";
+        echo "<td>". htmlspecialchars($row["event_status"]) . "</td>";
         echo "<td>" . htmlspecialchars($row['time_stamp']) . "</td>";
-        
         echo "</tr>";
     }
     ?>
