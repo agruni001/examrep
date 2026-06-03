@@ -680,7 +680,7 @@ function buildIndexPhp(studentName, accent = "#000000") {
 $host = "localhost";
 $user = "root";
 $password = "";
-$database = "testdb";
+$database = "security_db";
 
 $conn = mysqli_connect($host, $user, $password, $database);
 
@@ -688,14 +688,14 @@ if (!$conn) {
   die("Connection failed");
 }
 
-$sql = "SELECT * FROM users";
+$sql = "SELECT * FROM intrusion_events";
 $result = mysqli_query($conn, $sql);
 ?>
 
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Database Test${titleName}</title>
+  <title>${titleName}</title>
 
   <style>
     body {
@@ -719,11 +719,11 @@ $result = mysqli_query($conn, $sql);
 </head>
 <body>
 
-<h1>Users</h1>
+<h1>INTRUSION DETECTION SYSTEM BY ${titleName}</h1>
 
 <?php
 while($row = mysqli_fetch_assoc($result)) {
-  echo "<p>" . htmlspecialchars($row['name']) . "</p>";
+  echo "<p>" . htmlspecialchars($row['distance']) . "</p>";
 }
 ?>
 
