@@ -688,7 +688,7 @@ if (!$conn) {
     die("Connection failed: " . mysqli_connect_error());
 }
 
-$sql = "SELECT id, distance FROM intrusion_events"; // Specific columns are faster
+$sql = "SELECT * FROM intrusion_events"; // Specific columns are faster
 $result = mysqli_query($conn, $sql);
 ?>
 
@@ -749,6 +749,8 @@ $result = mysqli_query($conn, $sql);
         echo "<tr>";
         echo "<td>" . htmlspecialchars($row['id']) . "</td>";
         echo "<td>" . htmlspecialchars($row['distance']) . "</td>";
+        echo "<td>" . htmlspecialchars($row['time_stamp']) . "</td>";
+        
         echo "</tr>";
     }
     ?>
