@@ -740,6 +740,7 @@ $result = mysqli_query($conn, $sql);
     <tr>
       <th>ID</th>
       <th>Distance</th>
+       <th>Distance</th>
     </tr>
   </thead>
   <tbody>
